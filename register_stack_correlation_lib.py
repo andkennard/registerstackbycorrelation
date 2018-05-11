@@ -96,3 +96,25 @@ def fit_intercept_ransac(max_correlation):
                                           residual_threshold=1.5)
     ransac.fit(X,y)
     return ransac.estimator_.intercept_
+
+
+def register_frame(k, im, cumul_offset):
+    '''Given the particular timepoint k and list of all cumulative z-offsets
+    and the specific image im,
+    return a new image that is shifted in z appropriately (and does not throw
+    away any data).
+    intercept is -x --> cut off first x frames and append x blank at the end
+    intercept is +x --> add x blank frames in front and cut off last x frames
+    '''
+    min_offset = int(round(np.min(cumul_offset)))
+    max_offset = int(round(np.max(cumul_offset)))
+    original_len = im.shape[0]
+    new_len = original_len - min_offset + max_offset
+    frame_difference = int(round(cumul_offset[k]))
+    im_reg_shape = (new_len,) + im.shape[1:]
+    im_reg = np.zeros(im_reg_shape, dtype=im.dtype)
+
+    new_start = frame_difference - min_offset
+    new_end   = frame_difference - min_offset + original_len
+    im_reg[new_start:new_end,...] = im
+    return im_reg
